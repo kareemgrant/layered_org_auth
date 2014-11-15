@@ -4,6 +4,7 @@ require_relative 'root_org'
 require_relative 'org'
 require_relative 'child_org'
 require_relative 'user'
+require_relative 'unknown_role_error'
 
 class LayeredOrgAuthTest < MiniTest::Unit::TestCase
 
@@ -32,10 +33,12 @@ class LayeredOrgAuthTest < MiniTest::Unit::TestCase
     assert_equal(role, :user)
   end
 
-  def test_root_org_ability_to_create_org
-    org = @root.create_org('org')
+  def test_parent_of_an_org_is_root_org
+    org_1 = @root.create_org('org_1')
+    org_2 = @root.create_org('org_2')
 
-    assert_equal(@root, org.parent)
+    assert_equal(@root, org_1.parent)
+    assert_equal(@root, org_2.parent)
   end
 
   def test_user_assigned_as_admin_at_root_level_is_also_admin_at_org_level
@@ -63,12 +66,18 @@ class LayeredOrgAuthTest < MiniTest::Unit::TestCase
     assert_equal(org_2.access_level(@user), :admin)
   end
 
-  def test_org_ability_to_create_child_org
+  def test_parent_of_a_child_org_is_the_org_it_inherits_from
     @root.assign(@user, :admin)
-    org = @root.create_org('org')
-    child_org = org.create_child_org('child_org')
+    org_1 = @root.create_org('org_1')
+    org_2 = @root.create_org('org_2')
 
-    assert_equal(org, child_org.parent)
+    child_org_1 = org_1.create_child_org('child_org_1')
+    child_org_2 = org_2.create_child_org('child_org_2')
+
+    assert_equal(org_1, child_org_1.parent)
+    assert_equal(org_2, child_org_2.parent)
+
+    !refute_equal(org_1, child_org_2.parent)
   end
 
   def test_admin_at_root_level_is_also_admin_at_child_org_level
@@ -117,5 +126,11 @@ class LayeredOrgAuthTest < MiniTest::Unit::TestCase
     assert_equal(@root.access_level(@user), :admin)
     assert_equal(org.access_level(@user), :denied)
     assert_equal(child_org.access_level(@user), :user)
+  end
+
+  def test_raise_error_if_unknown_role_is_assigned
+    assert_raises(UnknownRoleError) do
+      @root.assign(@user, :moderator)
+    end
   end
 end

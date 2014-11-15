@@ -1,0 +1,3 @@
+class UnknownRoleError < Exception
+
+end

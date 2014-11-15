@@ -12,6 +12,7 @@ class RootOrg
   end
 
   def assign(user, role)
+    raise UnknownRoleError unless [:admin, :user, :denied].include?(role)
     access_list[user.id] = role
   end
 
