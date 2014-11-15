@@ -1,4 +1,4 @@
-class Org
+class Org < RootOrg
   attr_reader :name, :parent
   attr_accessor :access_list
 
@@ -10,11 +10,6 @@ class Org
 
   def create_child_org(name)
     ChildOrg.new(name, self)
-  end
-
-  def assign(user, role)
-    raise UnknownRoleError unless [:admin, :user, :denied].include?(role)
-    access_list[user.id] = role
   end
 
   def access_level(user)
